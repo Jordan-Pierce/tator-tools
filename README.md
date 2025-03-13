@@ -245,3 +245,21 @@ inferencer.inference()
 ```
 </details>
 
+<details>
+<summary>VideoStabilizer</summary>
+
+The `VideoStabilizer` class is used to create a stabilized version of the input video.
+
+```python
+from tator_tools.stabilize_video import VideoStabilizer
+
+# Initialize the stabilizer with the required parameters
+stabilizer = VideoStabilizer(
+    input_path="path/to/video.mp4",
+    output_path="path/to/output.mp4"
+)
+
+# Perform stabilization
+stabilizer.stabilize_video()
+```
+</details>
