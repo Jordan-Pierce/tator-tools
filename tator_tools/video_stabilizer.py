@@ -225,18 +225,18 @@ class VideoStabilizer:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Video Stabilization")
     
-    parser.add_argument("input_video", type=str, help="Path to the input video file",
+    parser.add_argument("--input_path", type=str, help="Path to the input video file",
                         required=True)
     
-    parser.add_argument("--output_video", type=str, help="Path to the output video file", 
+    parser.add_argument("--output_path", type=str, help="Path to the output video file", 
                         default=None)
     
     args = parser.parse_args()
     
     try:
         # Create the VideoStabilizer object
-        stabilizer = VideoStabilizer(args.input_video, 
-                                     args.output_video)
+        stabilizer = VideoStabilizer(args.input_path, 
+                                     args.output_path)
         
         # Stabilize the video
         stabilizer.stabilize_video()
