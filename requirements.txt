@@ -6,7 +6,8 @@ opencv-contrib-python
 opencv-python-headless
 tator
 ffmpeg-python
-ultralytics==8.3.0
-supervision==0.25.0
+ultralytics>=8.3.100
+supervision>=0.25.0
+roboflow
 dill
 scikit-image
