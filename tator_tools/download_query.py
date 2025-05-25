@@ -141,7 +141,6 @@ class QueryDownloader:
         
         # Loop through the queries (Class - tator localization)
         for q in tqdm(self.query, desc="Processing query"):
-            
             # Convert query object to dictionary
             q_type = q.__class__.__name__
             q_dict = q.to_dict()
@@ -208,9 +207,13 @@ class QueryDownloader:
                 'y': y,
                 'width': width,
                 'height': height,
-                'polygon': polygon,
-                'label': label
+                'polygon': polygon
             }
+            # Unnest label dict if label_field is a list
+            if isinstance(label, dict):
+                row_dict.update(label)
+            else:
+                row_dict['label'] = label
              
             # Add the dictionary to the list
             data.append(row_dict)
@@ -332,8 +335,9 @@ class QueryDownloader:
                 frame_data = self.data[(self.data['media'] == item['media']) & 
                                        (self.data['frame'] == item['frame'])].iloc[0]
                 
-                # Calculate dimensions maintaining aspect ratio if download_width is specified
+                # If user wants to resize the image, calculate the new dimensions
                 if self.download_width:
+                    # If provided with dimensions, use them to calculate the new dimensions
                     if frame_data['image_width'] and frame_data['image_height']:
                         # Use the existing dimensions
                         original_width = frame_data['image_width']
@@ -342,21 +346,21 @@ class QueryDownloader:
                         width = self.download_width
                         height = int(original_height * (self.download_width / original_width))
                     else:
-                        # Calculate the new dimensions using default aspect ratio (1.33)
+                        # Else, calculate the new dimensions using default aspect ratio (1.33)
                         width = self.download_width
                         height = int(self.download_width / 1.33)
-                elif frame_data['image_width'] and frame_data['image_height']:
-                    # Just use the original dimensions
-                    width = frame_data['image_width']
-                    height = frame_data['image_height']
                 else:
-                    # Use default dimensions
-                    width = 1024
-                    height = 768
+                    width = None
+                    height = None
+                    
+                if width and height:
+                    force_scale = f"{width}x{height}"
+                else:
+                    force_scale = None
                 
                 # Get the image from Tator at the specified resolution
                 temp = self.api.get_frame(id=item['media'],
-                                          force_scale=f"{width}x{height}",
+                                          force_scale=force_scale,
                                           frames=[int(item['frame'])])
 
                 # Move the image to the correct directory
@@ -391,7 +395,7 @@ class QueryDownloader:
         # Download all the images
         self.download_images()
         
-    def display_sample(self):
+    def display_sample(self, label_column='label'):
         """
         Display a sample of the data with images and labels overlaid.
         """
@@ -412,7 +416,7 @@ class QueryDownloader:
         ax.imshow(image_)
         
         # Create a color map for unique labels
-        labels = sample['label'].unique().tolist()
+        labels = sample[label_column].unique().tolist()
         
         if len(labels):
             color_map = plt.cm.get_cmap('hsv')(np.linspace(0, 1, len(labels)))
@@ -423,7 +427,7 @@ class QueryDownloader:
             # Get the bounding box coordinates and polygon
             x, y, w, h = row['x'], row['y'], row['width'], row['height']
             polygon = row['polygon']
-            label = row['label']
+            label = row[label_column]
             color = label_to_color[label]
             
             try:
