@@ -101,7 +101,6 @@ class VideoInferencer:
         self.box_annotator = None
         self.mask_annotator = None
         self.labeler = None
-        self.tracker = None
         self.slicer = None
 
     def load_models(self):
@@ -128,9 +127,6 @@ class VideoInferencer:
                     self.sam_model = SAM('mobile_sam.pt')
                 except Exception as e:
                     raise Exception(f"ERROR: Could not load SAM model!\n{e}")
-
-            if self.track:
-                self.tracker = sv.ByteTrack()
 
         except Exception as e:
             raise Exception(f"ERROR: Could not load model!\n{e}")
@@ -234,13 +230,22 @@ class VideoInferencer:
             for frame in tqdm(frame_generator, total=video_info.total_frames):
 
                 if self.start_at < f_idx < self.end_at:
-
-                    # Get detections
-                    detections = self.yolo_model(frame,
-                                                 iou=self.iou,
-                                                 conf=self.conf,
-                                                 device=self.device)[0]
-
+                    
+                    if self.track:
+                        # Use Ultralytics built-in tracking
+                        detections = self.yolo_model.track(frame, 
+                                                           persist=True, 
+                                                           iou=self.iou, 
+                                                           conf=self.conf, 
+                                                           tracker='botsort.yaml',  # 'bytetrack',
+                                                           device=self.device)[0]
+                    else:
+                        # Use Ultralytics built-in detection
+                        detections = self.yolo_model(frame, 
+                                                     iou=self.iou, 
+                                                     conf=self.conf, 
+                                                     device=self.device)[0]
+                    
                     detections = sv.Detections.from_ultralytics(detections)
 
                     # Perform segmentations
@@ -258,13 +263,7 @@ class VideoInferencer:
                     confidences = detections.confidence.tolist()
                     labels = [f"{name} {conf:0.2f}" for name, conf in list(zip(class_names, confidences))]
 
-                    # Track all detections
-                    if self.track:
-                        detections = self.tracker.update_with_detections(detections)
-                        tracker_ids = detections.tracker_id.astype(str).tolist()
-                        labels = [f"{t_id} {l}" for t_id, l in list(zip(tracker_ids, labels))]
-
-                    # Display frame, boxes, masks, labels, and rack
+                    # Display frame, boxes, masks, labels
                     frame = self.box_annotator.annotate(scene=frame, detections=detections)
                     frame = self.mask_annotator.annotate(scene=frame, detections=detections)
                     frame = self.labeler.annotate(scene=frame, detections=detections, labels=labels)
@@ -272,13 +271,23 @@ class VideoInferencer:
                     sink.write_frame(frame=frame)
 
                     if self.show:
-                        cv2.imshow('Predictions', frame)
-                        if cv2.waitKey(1) & 0xFF == ord('q'):
-                            break
+                        try:
+                            # frame = cv2.resize(frame, (640, 360))
+                            cv2.imshow('Predictions', frame)
+                        except Exception as e:
+                            print(f"cv2.imshow failed: {e}")
+                        try:
+                            if cv2.waitKey(1) & 0xFF == ord('q'):
+                                break
+                        except Exception as e:
+                            print(f"cv2.waitKey failed: {e}")
 
                 f_idx += 1
                 if f_idx >= self.end_at:
-                    cv2.destroyAllWindows()
+                    try:
+                        cv2.destroyAllWindows()
+                    except Exception as e:
+                        print(f"cv2.destroyAllWindows failed: {e}")
                     break
 
 
@@ -308,10 +317,10 @@ def main():
     parser.add_argument("--end_at", default=-1, type=int,
                         help="Frame to end inference")
 
-    parser.add_argument("--conf", default=0.65, type=float,
+    parser.add_argument("--conf", default=0.20, type=float,
                         help="Confidence threshold for the model")
 
-    parser.add_argument("--iou", default=0.25, type=float,
+    parser.add_argument("--iou", default=0.30, type=float,
                         help="IOU threshold for the model")
 
     parser.add_argument("--track", action='store_true',

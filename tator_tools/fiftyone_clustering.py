@@ -6,9 +6,51 @@ from datetime import datetime
 
 import cv2
 import numpy as np
+import pandas as pd
+
+import torch
+from ultralytics import YOLO
+
 import fiftyone as fo
 import fiftyone.brain as fob
-import pandas as pd
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Functions
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def calculate_embeddings(df: pd.DataFrame, model_weights: str, imgsz: int, image_column: str = "Path") -> np.ndarray:
+    """
+    Calculate embeddings for a given dataframe using a YOLO model.
+    """
+    # Load the model
+    model = YOLO(model_weights)
+    # Get the image size
+    imgsz = model.__dict__['overrides']['imgsz']
+
+    # Get the device
+    device ='cuda' if torch.cuda.is_available() else 'cpu'
+    print(f"NOTE: Using device {device}")
+
+    # Run a blank image through the model to load the weights
+    _ = model(np.zeros((imgsz, imgsz, 3), dtype=np.uint8), device=device) 
+
+    embeddings_list = []
+
+    # Use the length of df as the total for tqdm
+    total_items = len(df)
+    for path in tqdm(df['Path'].tolist(), total=total_items, desc="Calculating embeddings"):
+        embeddings = model.embed(path, imgsz=imgsz, stream=False, device=device, verbose=False)
+        embeddings_list.append(embeddings[0].cpu().numpy())
+    
+    # Convert the embeddings list to a numpy array
+    embeddings = np.array(embeddings_list)
+     
+    # Clear the cache
+    torch.cuda.empty_cache()  
+    
+    return embeddings
 
 
 # ----------------------------------------------------------------------------------------------------------------------
