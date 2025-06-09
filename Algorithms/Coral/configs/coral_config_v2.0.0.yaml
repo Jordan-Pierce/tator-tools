@@ -1,0 +1,8 @@
+version: 2.0.0
+description: "Coral detection using YOLO"
+
+# Model initialization
+model_confidence_threshold: 0.65
+iou_threshold: 0.25
+model_type: "YOLO"
+model_path: "/repo/Data/best.pt"

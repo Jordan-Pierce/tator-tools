@@ -111,12 +111,12 @@ def script_main() -> None:
             "media_id": media.id,
             "version_id": version.id,
             "frame": frame,
-            "x": bbox[0],
-            "y": bbox[1],
-            "width": bbox[2],
-            "height": bbox[3],
+            "x": float(bbox[0]),
+            "y": float(bbox[1]),
+            "width": float(bbox[2]),
+            "height": float(bbox[3]),
             "attributes": {
-                "AlgorithmName": "Algorithm Generated - CARL v1.0.0",
+                "AlgorithmName": f"Algorithm Generated - CARL {algo_config['version']}",
                 "AlgorithmScore": float(conf)}
         }
         localization_specs.append(spec)

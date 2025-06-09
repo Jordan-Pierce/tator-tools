@@ -41,10 +41,10 @@ def polygons_to_points(bboxes, image):
         normalized_h = height / image.shape[0]
 
         # Ensure normalized coordinates are within bounds
-        normalized_x = max(0, min(normalized_x, 1))
-        normalized_y = max(0, min(normalized_y, 1))
-        normalized_w = max(0, min(normalized_w, 1))
-        normalized_h = max(0, min(normalized_h, 1))
+        normalized_x = float(max(0, min(normalized_x, 1)))
+        normalized_y = float(max(0, min(normalized_y, 1)))
+        normalized_w = float(max(0, min(normalized_w, 1)))
+        normalized_h = float(max(0, min(normalized_h, 1)))
 
         # Append normalized bounding box to the list
         normalized_bboxes.append([normalized_x, normalized_y, normalized_w, normalized_h])

@@ -21,7 +21,7 @@ RUN apt update && \
 WORKDIR /workdir
 
 # Copy over the requirements
-COPY tator/docker/requirements.txt /workdir/
+COPY tator/Coral/docker/requirements.txt /workdir/
 
 # Install dependencies
 RUN python3 -m pip install -U pip
@@ -33,7 +33,7 @@ RUN mkdir /repo/Algorithms/Coral
 COPY Algorithms/Coral /repo/Algorithms/Coral
 
 RUN mkdir /repo/Data
-COPY Data/best.pt /repo/Data
+COPY Data/Corals/best.pt /repo/Data
 
 RUN mkdir /repo/tator
 RUN mkdir /repo/tator/scripts
