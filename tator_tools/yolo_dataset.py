@@ -259,7 +259,6 @@ class YOLODataset:
                 f.write(f"test: {os.path.join(self.dataset_dir, 'test')}\n")
                 
             f.write(f"nc: {len(self.classes)}\n")
-            f.write(f"names: {list(range(len(self.classes)))}\n")
             
             # Write class names as dictionary for better yaml format
             f.write("names:\n")
@@ -294,6 +293,11 @@ class YOLODataset:
 
             yolo_annotations = []
             for _, row in label_group.iterrows():
+                
+                if not os.path.exists(row['image_path']):
+                    print(f"Warning: Image path {row['image_path']} does not exist. Skipping annotation.")
+                    continue
+                
                 class_id = self.class_to_id[row['label']]
 
                 # Extract image width and height
@@ -327,6 +331,11 @@ class YOLODataset:
 
             yolo_annotations = []
             for _, row in label_group.iterrows():
+                
+                if not os.path.exists(row['image_path']):
+                    print(f"Warning: Image path {row['image_path']} does not exist. Skipping annotation.")
+                    continue
+                
                 class_id = self.class_to_id[row['label']]
 
                 # Extract image width and height
