@@ -61,9 +61,9 @@ class YOLORegionCropper:
         :return: None
         """
         print("NOTE: Loading dataset...")
-        
+
         special_characters = False
-        
+
         # Check if the dataset file exists
         if not os.path.exists(self.dataset_path):
             raise FileNotFoundError("Dataset not found.")
@@ -71,20 +71,25 @@ class YOLORegionCropper:
         with open(self.dataset_path, 'r') as file:
             self.dataset_data = yaml.safe_load(file)
 
-        # Get the class names
-        self.classes = self.dataset_data['names']
-        
+        # Get the class names (handle dict format: {0: name0, 1: name1, ...})
+        names = self.dataset_data['names']
+        if isinstance(names, dict):
+            # Sort by key to ensure correct order
+            self.classes = [names[i] for i in sorted(names, key=lambda x: int(x))]
+        else:
+            self.classes = names
+
         # Check if there are any special characters in the class names
         if any(re.search(r'[<>:"/\\|?*]', name) for name in self.classes):
             special_characters = True
-            
+
         # Format class names if specified
         if special_characters:
             if self.format_class_names:
                 self.classes = [re.sub(r'[<>:"/\\|?*]', '', name).strip() for name in self.classes]
             else:
                 raise ValueError("Class names cannot contain special characters use format_class_names to format them.")
-        
+
         # Process train path
         if isinstance(self.dataset_data.get('train'), str):
             self.train_path = self.dataset_data['train']
